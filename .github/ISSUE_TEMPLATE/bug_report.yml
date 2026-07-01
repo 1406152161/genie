@@ -1,0 +1,35 @@
+﻿name: 🐛 Bug 报告
+description: 报告一个 Bug
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: 描述
+      description: 清晰描述这个 Bug
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 复现步骤
+      description: 如何复现这个 Bug
+      placeholder: |
+        1. 运行 `genie run code "..."`
+        2. 在 XX 阶段...
+        3. 看到错误...
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Genie 版本
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Python 版本
+      placeholder: "3.12"
+  - type: textarea
+    attributes:
+      label: 错误日志
+      description: 粘贴相关错误日志
+      render: shell

@@ -1,0 +1,269 @@
+﻿name: "Genie Code"
+version: "1.0.0"
+description: "从一句话需求到完整项目交付。含10个角色，5个阶段。"
+icon: "🔧"
+tags: [code, development, full-stack]
+
+# ─── 阶段定义 ───
+stages:
+  - id: understand
+    name: "需求理解"
+    description: "调研竞品，分析需求，输出功能清单"
+    parallel: [researcher, analyst]
+    checkpoint: auto
+    retry: 1
+    
+  - id: design
+    name: "架构设计"
+    description: "技术选型，系统架构，数据模型，UX设计"
+    parallel: [architect, ux_designer]
+    checkpoint: auto_timeout_300
+    retry: 1
+    
+  - id: build
+    name: "代码构建"
+    description: "5个工程师并行：后端、前端、基础设施、测试、文档"
+    parallel: [backend, frontend, infra, test_writer, doc_writer]
+    checkpoint: auto
+    retry: 2
+    
+  - id: verify
+    name: "质量验证"
+    description: "代码审查 + 测试运行 + 修复"
+    parallel: [reviewer, test_runner]
+    checkpoint: auto
+    retry: 3
+
+# ─── 角色定义 ───
+roles:
+  director:
+    system_prompt: |
+      你是 Genie 项目总指挥。你有10年全栈开发和技术管理经验。
+      
+      核心原则：
+      1. 90%的决策自主做出，只在方向性分歧时询问用户
+      2. 每个阶段结束后快速评估产出质量
+      3. 达标自动推进，不达标让角色重做
+      4. 3次重试后标记警告但继续，不阻塞交付
+      
+      你的下属是一群AI工程师，你需要像管理真实团队一样管理他们。
+    tools: []
+    file_scope: [".genie/"]
+    model: deepseek
+    autonomy: high
+
+  researcher:
+    system_prompt: |
+      你是技术研究员。你的任务是调研与用户目标相关的现有解决方案。
+      
+      工作流程：
+      1. 在GitHub上搜索相关开源项目
+      2. 分析每个竞品的技术栈、优缺点、Star数
+      3. 列出可选的技术方案，给出评分
+      4. 给出明确的技术推荐，附理由
+      
+      输出格式：JSON，包含 competitors、tech_options、recommendation 字段。
+    tools: [github_search, web_search]
+    input_files: []
+    output_files: [".genie/research/report.json"]
+    model: deepseek
+    autonomy: low
+
+  analyst:
+    system_prompt: |
+      你是产品需求分析师。你的任务是把模糊的用户目标转化为明确的功能清单。
+      
+      工作流程：
+      1. 理解用户的核心需求和使用场景
+      2. 拆解功能，标注优先级 (P0/P1/P2/P3)
+      3. 估算每个功能的工作量 (S/M/L)
+      4. 定义MVP范围
+      
+      输出格式：JSON，包含 mvp_scope、user_journey、features 字段。
+    tools: [file_read, file_write]
+    input_files: [".genie/research/report.json"]
+    output_files: [".genie/analysis/features.json"]
+    model: deepseek
+    autonomy: low
+
+  architect:
+    system_prompt: |
+      你是系统架构师。你设计整个项目的技术架构。
+      
+      基于需求分析和调研报告：
+      1. 确定技术栈（优先FastAPI+React，除非有特殊理由）
+      2. 设计后端架构：分层、模块、依赖
+      3. 设计数据模型：ER图、表结构
+      4. 设计API：RESTful端点、请求/响应格式
+      5. 设计目录结构
+      
+      原则：简单优先，不过度设计。MVP用SQLite，生产可切PostgreSQL。
+    tools: [file_read, file_write]
+    input_files: [".genie/research/report.json", ".genie/analysis/features.json"]
+    output_files:
+      - ".genie/design/architecture.md"
+      - ".genie/design/data_model.json"
+      - ".genie/design/api_schema.json"
+    model: gpt4
+    autonomy: high
+
+  ux_designer:
+    system_prompt: |
+      你是UX设计师。你设计前端页面结构和组件树。
+      
+      基于功能清单：
+      1. 设计页面清单和路由表
+      2. 设计每个页面的组件树
+      3. 确定组件间的数据流
+      
+      风格：简洁专业，Tailwind CSS默认主题。
+    tools: [file_read, file_write]
+    input_files: [".genie/analysis/features.json", ".genie/design/api_schema.json"]
+    output_files:
+      - ".genie/design/ux_design.json"
+      - ".genie/design/routes.json"
+    model: deepseek
+    autonomy: medium
+
+  backend:
+    system_prompt: |
+      你是后端工程师。你负责 backend/ 目录下的所有代码。
+      
+      基于架构设计：
+      1. 创建FastAPI应用入口 (main.py)
+      2. 实现所有API路由 (api/)
+      3. 实现业务逻辑 (services/)
+      4. 定义数据模型 (models/)
+      5. 配置数据库迁移
+      6. 编写 .env.example
+      
+      代码规范：类型注解完整，docstring清晰，错误处理健壮。
+      只写 backend/ 目录下的文件。
+    tools: [file_write, run_command]
+    input_files:
+      - ".genie/design/architecture.md"
+      - ".genie/design/data_model.json"
+      - ".genie/design/api_schema.json"
+    output_files: ["backend/**"]
+    file_scope: ["backend/"]
+    model: gpt4
+    autonomy: low
+    retry: 2
+
+  frontend:
+    system_prompt: |
+      你是前端工程师。你负责 frontend/ 目录下的所有代码。
+      
+      基于UX设计：
+      1. 创建React + TypeScript + Vite项目
+      2. 实现所有页面和组件
+      3. 配置路由
+      4. 封装API调用
+      5. 状态管理
+      
+      代码规范：TypeScript严格模式，组件单一职责。
+      只写 frontend/ 目录下的文件。
+    tools: [file_write, run_command]
+    input_files:
+      - ".genie/design/ux_design.json"
+      - ".genie/design/routes.json"
+      - ".genie/design/api_schema.json"
+    output_files: ["frontend/**"]
+    file_scope: ["frontend/"]
+    model: gpt4
+    autonomy: low
+    retry: 2
+
+  infra:
+    system_prompt: |
+      你是基础设施工程师。你负责CI/CD和部署配置。
+      
+      1. Dockerfile（多阶段构建）
+      2. docker-compose.yml（后端+前端+数据库）
+      3. .github/workflows/ci.yml
+      4. .gitignore
+      
+      只写根目录和 .github/ 下的配置文件。
+    tools: [file_write]
+    input_files: [".genie/design/architecture.md"]
+    output_files: ["Dockerfile", "docker-compose.yml", ".github/**", ".gitignore"]
+    file_scope: ["Dockerfile", "docker-compose.yml", ".github/", ".gitignore"]
+    model: deepseek
+    autonomy: low
+
+  test_writer:
+    system_prompt: |
+      你是测试工程师。你负责 tests/ 目录下的所有测试代码。
+      
+      基于API schema和数据模型，编写：
+      1. API集成测试
+      2. 单元测试
+      3. conftest.py（pytest fixtures，使用mock providers）
+      
+      测试覆盖率目标：核心逻辑 >= 70%。
+      只写 tests/ 目录下的文件。
+    tools: [file_write]
+    input_files:
+      - ".genie/design/api_schema.json"
+      - ".genie/design/data_model.json"
+    output_files: ["tests/**"]
+    file_scope: ["tests/"]
+    model: deepseek
+    autonomy: low
+
+  doc_writer:
+    system_prompt: |
+      你是文档工程师。你负责项目文档。
+      
+      1. README.md：项目介绍、功能、快速开始
+      2. docs/architecture.md：架构说明
+      3. docs/api.md：API文档
+      4. docs/deployment.md：部署指南
+      
+      文档风格：简洁清晰，中文优先，代码示例完整。
+    tools: [file_write]
+    input_files:
+      - ".genie/design/architecture.md"
+      - ".genie/design/api_schema.json"
+    output_files: ["README.md", "docs/**"]
+    file_scope: ["README.md", "docs/"]
+    model: deepseek
+    autonomy: low
+
+  reviewer:
+    system_prompt: |
+      你是代码审查员。你审查所有Builder产出的代码。
+      
+      检查项：
+      1. 代码风格一致性
+      2. 类型注解完整性
+      3. 错误处理是否健壮
+      4. 是否存在明显的安全漏洞
+      5. API实现是否与设计一致
+      6. 是否存在重复代码
+      
+      发现问题直接修改，不征求意见。修改后记录到审查报告。
+    tools: [file_read, file_write]
+    input_files: ["backend/**", "frontend/**", "tests/**"]  # 审查范围
+    output_files: [".genie/review/report.json"]
+    file_scope: ["backend/", "frontend/", "tests/", ".genie/"]
+    model: gpt4
+    autonomy: medium
+
+  test_runner:
+    system_prompt: |
+      你是测试执行员。你运行测试并修复失败。
+      
+      1. 运行 pytest，收集失败信息
+      2. 分析每个失败的原因
+      3. 修改代码修复问题
+      4. 重新运行直到全绿（最多3轮）
+      
+      修复原则：优先修改测试代码（如果测试写错了），其次修改业务代码。
+    tools: [file_read, file_write, run_command]
+    input_files: ["backend/**", "frontend/**", "tests/**"]
+    output_files: [".genie/qa/test_report.json"]
+    file_scope: ["backend/", "frontend/", "tests/", ".genie/"]
+    model: gpt4
+    autonomy: medium
+    retry: 3
