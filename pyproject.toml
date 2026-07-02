@@ -13,6 +13,7 @@ authors = [{name = "1406152161", email = "1406152161@qq.com"}]
 keywords = ["ai", "agent", "orchestration"]
 dependencies = ["pyyaml>=6.0", "jsonschema>=4.20", "click>=8.1", "httpx>=0.25", "fastapi>=0.109", "uvicorn>=0.27"]
 [project.scripts]
+genie-mcp = "genie_mcp.server:main"
 genie = "genie_cli.main:main"
 
 
@@ -20,7 +21,7 @@ genie = "genie_cli.main:main"
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4", "mypy>=1.10", "pytest-cov>=5.0"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["genie_engine", "genie_cli", "genie_hub", "genie_api"]
+packages = ["genie_engine", "genie_cli", "genie_hub", "genie_api", "genie_mcp"]
 
 [tool.ruff]
 target-version = "py311"

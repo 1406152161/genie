@@ -1,0 +1,1 @@
+"""Genie MCP Server — 让 Cursor / Claude Desktop 等 MCP 客户端调用 Genie Engine"""
