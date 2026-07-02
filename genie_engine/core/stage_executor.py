@@ -100,7 +100,7 @@ class StageExecutor:
     async def _execute_stage_with_retry(self, stage: StageDef) -> StageOutput:
         """执行一个阶段，含重试逻辑"""
         start = time.monotonic()
-        last_error: str = ""
+        pass  # last_error removed (unused)
 
         for attempt in range(stage.retry + 1):
             if attempt > 0:
@@ -121,13 +121,13 @@ class StageExecutor:
                         retries=attempt,
                     )
                 else:
-                    last_error = f"Director 评估未通过 (attempt {attempt + 1})"
+                    pass  # Director evaluation not passed, will retry
 
             except asyncio.CancelledError:
                 logger.info("阶段 %s 被取消", stage.id)
                 return StageOutput(stage_id=stage.id, status="cancelled")
             except Exception as exc:
-                last_error = str(exc)
+                # error already logged
                 logger.warning("阶段 %s 失败 (attempt %d): %s", stage.id, attempt + 1, exc)
 
         # 所有重试都用完了

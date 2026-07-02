@@ -1,4 +1,4 @@
-﻿"""RolePack 加载器 — YAML→校验→RolePackDefinition。"""
+"""RolePack 加载器 — YAML→校验→RolePackDefinition。"""
 
 import yaml
 from pathlib import Path
@@ -53,7 +53,7 @@ class PackLoader:
         role_errors = definition.validate_stage_roles()
         if role_errors:
             raise PackLoadError(
-                f"Stage 引用了未定义的角色:\n" + "\n".join(f"  - {e}" for e in role_errors)
+                "Stage 引用了未定义的角色:\n" + "\n".join(f"  - {e}" for e in role_errors)
             )
 
         return definition

@@ -5,7 +5,7 @@ import re
 import time
 
 from genie_engine.core.workspace import Workspace
-from genie_engine.providers.base import Message
+from genie_engine.providers.base import Message, ProviderResponse
 from genie_engine.providers.registry import ProviderRegistry
 from genie_engine.schemas.rolepack import RoleDef
 from genie_engine.schemas.result import RoleOutput

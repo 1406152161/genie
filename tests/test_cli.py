@@ -1,4 +1,4 @@
-﻿"""测试 CLI 命令"""
+"""测试 CLI 命令"""
 
 import subprocess
 import sys
@@ -13,7 +13,7 @@ class TestCLI:
             capture_output=True, text=True,
         )
         assert result.returncode == 0
-        assert "通过" in result.stdout
+        assert "validation passed" in result.stdout
 
     def test_validate_invalid_pack(self):
         result = subprocess.run(
@@ -27,4 +27,4 @@ class TestCLI:
             [sys.executable, "-m", "genie_cli.main", "run"],
             capture_output=True, text=True,
         )
-        assert "用法" in result.stdout
+        assert "Usage" in result.stdout

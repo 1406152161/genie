@@ -1,19 +1,19 @@
-"""Genie CLI — 命令行入口"""
-
-import asyncio
+﻿import asyncio
 import sys
 from pathlib import Path
 
 
 def main():
-    """CLI 入口（setup.py entry_point 指向此函数）"""
+    """CLI entry point"""
     if len(sys.argv) < 2:
         _print_usage()
         return
 
     command = sys.argv[1]
 
-    if command == "run":
+    if command == "hub":
+        _cmd_hub(sys.argv[2:])
+    elif command == "run":
         asyncio.run(_cmd_run(sys.argv[2:]))
     elif command == "pack":
         _cmd_pack(sys.argv[2:])
@@ -22,51 +22,52 @@ def main():
     elif command in ("-h", "--help", "help"):
         _print_usage()
     else:
-        print(f"未知命令: {command}")
+        print(f"Unknown command: {command}")
         _print_usage()
 
 
 def _print_usage():
-    print("""Genie — 你说一句话，它还你一个项目。
+    print("""Genie - One sentence, one project.
 
-用法:
-  genie run <pack> "你的需求"
+Usage:
+  genie run <pack> "your goal"
   genie pack validate <pack.yaml>
   genie pack list
+  genie hub search <query>
+  genie hub list
 
-示例:
-  genie run code "做一个小说写作AI工具"
+Examples:
+  genie run code "Build a novel writing AI tool"
   genie pack validate rolepacks/code.rolepack.yaml
+  genie hub search code
 """)
 
 
 async def _cmd_run(args: list[str]):
     """genie run <pack> <goal>"""
     if len(args) < 2:
-        print("用法: genie run <pack> <goal>")
-        print("示例: genie run code '做一个小说写作AI工具'")
+        print("Usage: genie run <pack> <goal>")
+        print('Example: genie run code "Build a novel writing AI tool"')
         return
 
     pack_name = args[0]
     goal = args[1]
 
-    # 查找 RolePack 文件
     pack_path = _find_pack(pack_name)
     if not pack_path:
-        print(f"找不到 RolePack: {pack_name}")
-        print("可用: code, pack")
+        print(f"RolePack not found: {pack_name}")
+        print("Available: code, pack")
         return
 
     from genie_engine.core.engine import GenieEngine
     from genie_engine.progress.hub import get_progress_hub
 
-    print(f"\n[Genie] Genie 开始工作: {goal}")
-    print(f"[Pack] 使用: {pack_name}\n")
+    print(f"\n[Genie] Starting: {goal}")
+    print(f"[Pack] Using: {pack_name}\n")
 
     engine = GenieEngine(pack_path)
     hub = get_progress_hub()
 
-    # 后台订阅进度
     async def print_progress():
         async for event in hub.subscribe("cli_run"):
             if event["type"] == "heartbeat":
@@ -86,70 +87,144 @@ async def _cmd_run(args: list[str]):
         result = await engine.execute(goal, model="mock")
         progress_task.cancel()
     except Exception as exc:
-        print(f"\n[ERR] 运行失败: {exc}")
+        print(f"\n[ERR] Run failed: {exc}")
         return
 
     print(f"\n{'='*50}")
-    print(f"状态: {result.status}")
-    print(f"耗时: {result.total_duration_seconds:.1f}s")
-    print(f"阶段: {len(result.stages)} 个")
+    print(f"Status: {result.status}")
+    print(f"Duration: {result.total_duration_seconds:.1f}s")
+    print(f"Stages: {len(result.stages)}")
     for s in result.stages:
         icon = "[OK]" if s.status == "completed" else "[ERR]"
         print(f"  {icon} {s.stage_id}: {s.status} ({s.duration_seconds:.1f}s)")
     if result.warnings:
-        print(f"警告: {len(result.warnings)} 条")
-    print(f"输出: {result.output_dir}")
+        print(f"Warnings: {len(result.warnings)}")
+    print(f"Output: {result.output_dir}")
 
 
 def _cmd_pack(args: list[str]):
     """genie pack validate|list"""
     if not args:
-        print("用法: genie pack <validate|list>")
+        print("Usage: genie pack <validate|list>")
         return
 
     sub = args[0]
     if sub == "validate":
         if len(args) < 2:
-            print("用法: genie pack validate <pack.yaml>")
+            print("Usage: genie pack validate <pack.yaml>")
             return
         _validate_pack(args[1])
     elif sub == "list":
         _list_packs()
     else:
-        print(f"未知子命令: pack {sub}")
+        print(f"Unknown sub-command: pack {sub}")
 
 
 def _cmd_validate(args: list[str]):
-    """genie validate <pack.yaml> (简写)"""
+    """genie validate <pack.yaml> (shorthand)"""
     if not args:
-        print("用法: genie validate <pack.yaml>")
+        print("Usage: genie validate <pack.yaml>")
         return
     _validate_pack(args[0])
 
 
 def _validate_pack(path_str: str):
-    """校验 RolePack 文件"""
+    """Validate a RolePack file"""
     from genie_engine.core.pack_loader import PackLoader
 
     try:
         definition = PackLoader(path_str).load()
-        print(f"[OK] {definition.name} v{definition.version} — 校验通过")
-        print(f"   阶段: {len(definition.stages)} 个")
-        print(f"   角色: {len(definition.roles)} 个")
+        print(f"[OK] {definition.name} v{definition.version} - validation passed")
+        print(f"    Stages: {len(definition.stages)}")
+        print(f"    Roles: {len(definition.roles)}")
     except Exception as exc:
-        print(f"[ERR] 校验失败: {exc}")
+        print(f"[ERR] Validation failed: {exc}")
         sys.exit(1)
 
 
 def _list_packs():
-    """列出可用的 RolePack"""
+    """List available RolePacks"""
     packs_dir = Path(__file__).parent.parent / "rolepacks"
     for f in packs_dir.glob("*.yaml"):
-        print(f"  [Pack] {f.stem} — {f.name}")
+        print(f"  [Pack] {f.stem} - {f.name}")
+
+
+def _cmd_hub(args: list[str]):
+    """genie hub search|list|install|uninstall"""
+    if not args:
+        print("Usage: genie hub <search|list|install|uninstall>")
+        return
+
+    from genie_hub import LocalRegistry, Marketplace, PackInstaller, InstallResult
+
+    sub = args[0]
+    registry = LocalRegistry()
+    marketplace = Marketplace(registry)
+    installer = PackInstaller()
+
+    if sub == "search":
+        query = args[1] if len(args) > 1 else ""
+        results = marketplace.search(query) if query else marketplace.list_community()
+        if not results:
+            print("(no matching RolePacks found)")
+            return
+        print(f"\nSearch results ({len(results)}):\n")
+        for p in results:
+            installed = "[installed]" if registry.is_installed(p.name) else "[available]"
+            print(f"  {p.icon} {installed} {p.name} v{p.version}")
+            print(f"          {p.description}")
+            if p.tags:
+                print(f"          tags: {', '.join(p.tags)}")
+            print()
+
+    elif sub == "list":
+        packs = registry.list_all()
+        if not packs:
+            print("(no RolePacks installed, try: genie hub search)")
+            return
+        print(f"\nInstalled RolePacks ({len(packs)}):\n")
+        for p in packs:
+            print(f"  {p.icon} {p.name} v{p.version}")
+            print(f"          {p.description}")
+            print(f"          path: {p.path}")
+            print()
+
+    elif sub == "install":
+        if len(args) < 2:
+            print("Usage: genie hub install <pack_name>")
+            return
+        name = args[1]
+        pack = marketplace.get_community_pack(name)
+        if pack:
+            result = installer.install_from_community(pack)
+        else:
+            result = InstallResult(
+                success=False, pack_name=name, version="?",
+                error=f"Pack not found in marketplace: {name}"
+            )
+        if result.success:
+            print(f"[OK] {result.pack_name} v{result.version} installed!")
+            print(f"      {result.installed_path}")
+        else:
+            print(f"[ERR] {result.error}")
+
+    elif sub == "uninstall":
+        if len(args) < 2:
+            print("Usage: genie hub uninstall <pack_name>")
+            return
+        result = installer.uninstall(args[1])
+        if result.success:
+            print(f"[OK] {result.pack_name} uninstalled")
+        else:
+            print(f"[ERR] {result.error}")
+
+    else:
+        print(f"Unknown sub-command: hub {sub}")
+        print("Available: hub search|list|install|uninstall")
 
 
 def _find_pack(name: str) -> Path | None:
-    """按名称查找 RolePack 文件"""
+    """Find RolePack file by name"""
     packs_dir = Path(__file__).parent.parent / "rolepacks"
     candidates = [
         packs_dir / f"{name}.rolepack.yaml",
