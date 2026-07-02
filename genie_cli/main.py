@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import sys
 from pathlib import Path
 
@@ -11,7 +11,9 @@ def main():
 
     command = sys.argv[1]
 
-    if command == "hub":
+    if command == "compare":
+        asyncio.run(_cmd_compare(sys.argv[2:]))
+    elif command == "hub":
         _cmd_hub(sys.argv[2:])
     elif command == "run":
         asyncio.run(_cmd_run(sys.argv[2:]))
@@ -35,6 +37,8 @@ Usage:
   genie pack list
   genie hub search <query>
   genie hub list
+  genie compare <pack> <goal> [--models m1,m2]
+  genie pipeline run <steps.yaml>
 
 Examples:
   genie run code "Build a novel writing AI tool"
@@ -222,6 +226,114 @@ def _cmd_hub(args: list[str]):
         print(f"Unknown sub-command: hub {sub}")
         print("Available: hub search|list|install|uninstall")
 
+
+
+
+def _cmd_pipeline(args: list[str]):
+    """genie pipeline run <steps.yaml>"""
+    if not args or args[0] not in ("run",):
+        print("Usage: genie pipeline run <steps.yaml>")
+        print()
+        print("Steps YAML format:")
+        print("  steps:")
+        print('    - pack: code')
+        print('      goal: "Build a todo app"')
+        print('    - pack: pack')
+        print('      goal: "Create audit RolePack for the project"')
+        return
+
+    if len(args) < 2:
+        print("Usage: genie pipeline run <steps.yaml>")
+        return
+
+    from genie_engine.pipeline.executor import PipelineExecutor
+    import yaml
+
+    steps_path = Path(args[1])
+    if not steps_path.exists():
+        print(f"Steps file not found: {steps_path}")
+        return
+
+    try:
+        data = yaml.safe_load(steps_path.read_text(encoding="utf-8"))
+        raw_steps = data.get("steps", [])
+    except Exception as exc:
+        print(f"Failed to parse steps YAML: {exc}")
+        return
+
+    if not raw_steps:
+        print("No steps defined in YAML")
+        return
+
+    # Resolve pack names to paths
+    steps: list[tuple[str, str]] = []
+    for s in raw_steps:
+        pack_name = s.get("pack", "")
+        goal = s.get("goal", "")
+        pack_path = _find_pack(pack_name)
+        if not pack_path:
+            print(f"Pack not found: {pack_name}")
+            return
+        steps.append((str(pack_path), goal))
+
+    print(f"\n[Pipeline] Running {len(steps)} steps:\n")
+    for i, (path, goal) in enumerate(steps):
+        print(f"  {i+1}. [{Path(path).stem}] {goal}")
+    print()
+
+    executor = PipelineExecutor(steps)
+    result = asyncio.run(executor.execute())
+
+    print(f"\n{'='*50}")
+    if result.all_passed:
+        print("Pipeline: ALL PASSED")
+    else:
+        passed = sum(1 for s in result.steps if s.is_success)
+        print(f"Pipeline: {passed}/{len(result.steps)} passed")
+    print(f"Total cost: ${result.total_cost_usd:.4f}")
+    for i, step in enumerate(result.steps):
+        icon = "[OK]" if step.is_success else "[ERR]"
+        print(f"  {icon} Step {i+1}: {step.status} ({step.total_duration_seconds:.1f}s)")
+
+def _cmd_compare(args: list[str]):
+    """genie compare <pack> <goal> [--models model1,model2,...]"""
+    if len(args) < 2:
+        print("Usage: genie compare <pack> <goal> [--models m1,m2,...]")
+        print('Example: genie compare code "Build a todo app" --models mock,deepseek')
+        return
+
+    pack_name = args[0]
+    goal = args[1]
+    models = ["mock"]
+
+    # Parse --models flag
+    for i, a in enumerate(args):
+        if a == "--models" and i + 1 < len(args):
+            models = [m.strip() for m in args[i + 1].split(",")]
+            break
+
+    pack_path = _find_pack(pack_name)
+    if not pack_path:
+        print(f"RolePack not found: {pack_name}")
+        return
+
+    from genie_engine.compare.runner import ProviderComparator
+
+    print(f"\n[Compare] Running '{goal}' with {len(models)} models: {', '.join(models)}\n")
+
+    comparator = ProviderComparator(pack_path)
+    report = asyncio.run(comparator.compare(goal, models))
+
+    print(report.summary)
+    print()
+
+    for run in report.runs:
+        icon = "[OK]" if run.model in report.models_passed else "[ERR]"
+        if run.error:
+            print(f"  {icon} {run.model}: ERROR — {run.error}")
+        elif run.result:
+            stages_ok = sum(1 for s in run.result.stages if s.status == "completed")
+            print(f"  {icon} {run.model}: {stages_ok}/{len(run.result.stages)} stages, {run.duration_seconds:.1f}s, ${run.cost_usd:.4f}")
 
 def _find_pack(name: str) -> Path | None:
     """Find RolePack file by name"""

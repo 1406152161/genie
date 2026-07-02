@@ -1,0 +1,6 @@
+# Genie Pipeline — multi-RolePack chaining example
+steps:
+  - pack: code
+    goal: "Build a todo app with FastAPI backend and React frontend"
+  - pack: pack
+    goal: "Create a security audit RolePack for the todo app project"
