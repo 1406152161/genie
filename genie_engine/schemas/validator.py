@@ -3,6 +3,7 @@
 from typing import Any
 
 
+
 ROLEPACK_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
@@ -108,4 +109,3 @@ class SchemaValidator:
 
         return errors
 
-from typing import Any
