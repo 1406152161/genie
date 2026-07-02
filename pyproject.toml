@@ -31,5 +31,6 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.mypy]
+explicit_package_bases = true
 python_version = "3.11"
 ignore_missing_imports = true
