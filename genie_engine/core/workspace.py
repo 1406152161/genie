@@ -1,4 +1,4 @@
-﻿"""共享工作空间 — 角色间唯一通信媒介。
+"""共享工作空间 — 角色间唯一通信媒介。
 
 目录结构:
     .genie/
@@ -40,7 +40,7 @@ class Workspace:
 
     # ─── 初始化 ───
 
-    def init(self, goal: str, model: str = "deepseek", budget: float | None = None) -> None:
+    def init(self, goal: str, model: str = "mock", budget: float | None = None) -> None:
         """初始化一次新的 Run"""
         if self.genie_dir.exists():
             raise WorkspaceError(
