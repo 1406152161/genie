@@ -1,16 +1,14 @@
-﻿"""阶段执行器 — 按 DAG 顺序执行所有阶段。"""
+"""阶段执行器 — 按 DAG 顺序执行所有阶段。"""
 
 import asyncio
 import logging
 import time
-from typing import Any
 
 from genie_engine.core.director import Director, DirectorDecision
 from genie_engine.core.role_factory import RoleFactory
 from genie_engine.core.workspace import Workspace
 from genie_engine.schemas.rolepack import RolePackDefinition, StageDef
 from genie_engine.schemas.result import StageOutput, RoleOutput, EngineResult
-from genie_engine.core.exceptions import StageExecutionError
 
 logger = logging.getLogger(__name__)
 

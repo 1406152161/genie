@@ -1,6 +1,5 @@
 """测试 core 层 — pack_loader, workspace, role_factory, director, engine"""
 
-import json
 import pytest
 import tempfile
 from pathlib import Path
@@ -11,7 +10,7 @@ from genie_engine.core.role_factory import RoleFactory, Role
 from genie_engine.core.director import Director, DirectorDecision
 from genie_engine.core.engine import GenieEngine
 from genie_engine.core.exceptions import PackLoadError, WorkspaceError
-from genie_engine.schemas.rolepack import RolePackDefinition, StageDef, RoleDef, AutonomyLevel
+from genie_engine.schemas.rolepack import RolePackDefinition, StageDef, RoleDef
 
 
 # ─── PackLoader Tests ───

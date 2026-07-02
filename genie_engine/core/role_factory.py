@@ -1,17 +1,14 @@
 """角色工厂 — 从 RoleDef 创建 Role 实例。"""
 
-import asyncio
 import logging
 import re
 import time
-from pathlib import Path
 
 from genie_engine.core.workspace import Workspace
-from genie_engine.providers.base import LLMProvider, Message
+from genie_engine.providers.base import Message
 from genie_engine.providers.registry import ProviderRegistry
 from genie_engine.schemas.rolepack import RoleDef
 from genie_engine.schemas.result import RoleOutput
-from genie_engine.core.exceptions import RoleExecutionError
 
 logger = logging.getLogger(__name__)
 

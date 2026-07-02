@@ -1,6 +1,5 @@
-﻿"""测试 schemas/validator.py"""
+"""测试 schemas/validator.py"""
 
-import pytest
 from genie_engine.schemas.validator import SchemaValidator
 
 

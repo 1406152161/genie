@@ -1,9 +1,6 @@
-﻿"""运行结果数据定义 — 引擎执行后的输出结构。"""
+"""运行结果数据定义 — 引擎执行后的输出结构。"""
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
-from typing import Any
 
 
 @dataclass

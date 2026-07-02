@@ -1,8 +1,7 @@
-﻿"""RolePack YAML Schema 校验器。"""
+"""RolePack YAML Schema 校验器。"""
 
-import json
-from pathlib import Path
 from typing import Any
+
 
 ROLEPACK_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -108,3 +107,5 @@ class SchemaValidator:
                 builder_scopes[scope] = name
 
         return errors
+
+from typing import Any

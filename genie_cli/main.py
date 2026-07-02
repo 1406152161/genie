@@ -143,7 +143,6 @@ def _validate_pack(path_str: str):
 
 def _list_packs():
     """列出可用的 RolePack"""
-    import os
     packs_dir = Path(__file__).parent.parent / "rolepacks"
     for f in packs_dir.glob("*.yaml"):
         print(f"  [Pack] {f.stem} — {f.name}")

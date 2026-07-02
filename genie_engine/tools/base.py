@@ -1,7 +1,7 @@
-﻿"""工具抽象基类 + 注册表"""
+"""工具抽象基类 + 注册表"""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from genie_engine.sandbox.scope import FileScope
