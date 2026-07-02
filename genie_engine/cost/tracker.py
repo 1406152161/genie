@@ -1,4 +1,4 @@
-﻿"""运行时成本追踪"""
+"""运行时成本追踪"""
 
 import logging
 from genie_engine.schemas.result import CostRecord
@@ -6,7 +6,7 @@ from genie_engine.schemas.result import CostRecord
 logger = logging.getLogger(__name__)
 
 # 复用 estimator 的成本数据
-MODEL_COSTS = {
+MODEL_COSTS: dict[str, dict[str, float]] = {
     "mock":     {"input": 0, "output": 0},
     "deepseek": {"input": 0.00014, "output": 0.00028},
     "gpt4":     {"input": 0.0025, "output": 0.01},

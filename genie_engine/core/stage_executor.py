@@ -154,4 +154,4 @@ class StageExecutor:
             return_exceptions=True,
         )
 
-        return list(results)
+        return [r if not isinstance(r, BaseException) else Exception(str(r)) for r in results]  # type: ignore[return-value]

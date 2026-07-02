@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -33,3 +33,5 @@ htmlcov/
 
 # Node (genie_web)
 node_modules/
+
+genie_compare_*/

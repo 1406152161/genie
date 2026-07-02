@@ -1,9 +1,9 @@
-﻿"""运行前成本预估"""
+"""运行前成本预估"""
 
 from genie_engine.schemas.result import CostEstimate
 
 # 各模型成本 (USD per 1K tokens)
-MODEL_COSTS = {
+MODEL_COSTS: dict[str, dict[str, float]] = {
     "mock":     {"input": 0,        "output": 0},
     "deepseek": {"input": 0.00014,  "output": 0.00028},
     "gpt4":     {"input": 0.0025,   "output": 0.01},

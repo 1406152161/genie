@@ -105,9 +105,9 @@ class ProviderComparator:
                 self._run_single(goal, model, budget)
                 for model in models
             ]
-            runs = await asyncio.gather(*tasks, return_exceptions=True)
-            for i, run_or_exc in enumerate(runs):
-                if isinstance(run_or_exc, Exception):
+            raw_runs = await asyncio.gather(*tasks, return_exceptions=True)
+            for i, run_or_exc in enumerate(raw_runs):
+                if isinstance(run_or_exc, BaseException):
                     report.runs.append(ModelRun(
                         model=models[i],
                         error=str(run_or_exc),
